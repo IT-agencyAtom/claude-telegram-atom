@@ -10,6 +10,8 @@ TARGETS=(
 for DIR in "${TARGETS[@]}"; do
   if [ -d "$DIR" ]; then
     cp "$SRC/server.ts" "$DIR/server.ts"
+    cp "$SRC/router.ts" "$DIR/router.ts"
+    cp "$SRC/topic-mcp.ts" "$DIR/topic-mcp.ts"
     rm -rf "$DIR/extensions"
     cp -r "$SRC/extensions" "$DIR/extensions"
     echo "✓ deployed to $DIR"

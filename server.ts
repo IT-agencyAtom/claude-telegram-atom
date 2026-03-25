@@ -1,4 +1,12 @@
 #!/usr/bin/env bun
+
+// [CUSTOM] Topic mode — delegate to topic-mcp.ts when a topic name is set
+if (process.env.TELEGRAM_TOPIC_NAME || process.env.TELEGRAM_TOPIC_ID) {
+  await import('./topic-mcp.js')
+  // topic-mcp runs forever via stdio; if it returns, exit cleanly
+  await new Promise(() => {}) // block forever
+}
+
 /**
  * Telegram channel for Claude Code.
  *
