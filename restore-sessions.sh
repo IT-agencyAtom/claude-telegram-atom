@@ -93,7 +93,7 @@ with open(sys.argv[1]) as f:
 for name, entry in sorted(data.items()):
     topic = entry['topic_name']
     cwd = entry['cwd']
-    cmd = entry.get('launch_cmd', f'TELEGRAM_TOPIC_NAME=\"{topic}\" claude --channels plugin:telegram@atom-plugins')
+    cmd = entry.get('launch_cmd', f'TELEGRAM_TOPIC_NAME=\"{topic}\" claude --channels plugin:telegram-enhanced@atom-plugins')
     print(topic + '\t' + cwd + '\t' + cmd)
 " "$SESSIONS_FILE" 2>/dev/null)
 

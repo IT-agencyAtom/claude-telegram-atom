@@ -1,15 +1,15 @@
 #!/bin/bash
-# Install telegram@atom-plugins for Claude Code
+# Install telegram-enhanced@atom-plugins for Claude Code
 #
 # For manual install. If the marketplace is already added, just run:
-#   /plugin install telegram@atom-plugins
+#   /plugin install telegram-enhanced@atom-plugins
 #
 # Usage: bash install.sh
 
 set -e
 
 SRC="$(cd "$(dirname "$0")" && pwd)"
-PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/atom-plugins/external_plugins/telegram"
+PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/atom-plugins/external_plugins/telegram-enhanced"
 SETTINGS="$HOME/.claude/settings.json"
 
 # Create symlink (or replace existing)
@@ -24,16 +24,16 @@ echo "✓ linked $PLUGIN_DIR → $SRC"
 
 # Enable plugin in settings.json
 if [ -f "$SETTINGS" ]; then
-  if ! grep -q '"telegram@atom-plugins"' "$SETTINGS"; then
+  if ! grep -q '"telegram-enhanced@atom-plugins"' "$SETTINGS"; then
     python3 -c "
 import json
 with open('$SETTINGS') as f:
     d = json.load(f)
-d.setdefault('enabledPlugins', {})['telegram@atom-plugins'] = True
+d.setdefault('enabledPlugins', {})['telegram-enhanced@atom-plugins'] = True
 with open('$SETTINGS', 'w') as f:
     json.dump(d, f, indent=2)
     f.write('\n')
-print('✓ enabled telegram@atom-plugins in settings.json')
+print('✓ enabled telegram-enhanced@atom-plugins in settings.json')
 "
   else
     echo "✓ already enabled in settings.json"
@@ -44,4 +44,4 @@ fi
 
 echo ""
 echo "Done! Launch with:"
-echo "  claude --channels plugin:telegram@atom-plugins"
+echo "  claude --channels plugin:telegram-enhanced@atom-plugins"

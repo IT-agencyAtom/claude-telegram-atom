@@ -250,7 +250,7 @@ async function handleClientMessage(socket: Socket, msg: Record<string, unknown>)
       const cwd = (msg.cwd as string) || ''
       if (cwd) {
         // Build the launch command that can reproduce this session
-        const launchCmd = `TELEGRAM_TOPIC_NAME="${topicName}" claude --channels plugin:telegram@atom-plugins`
+        const launchCmd = `TELEGRAM_TOPIC_NAME="${topicName}" claude --channels plugin:telegram-enhanced@atom-plugins`
         sessionsRegistry[topicName] = {
           topic_name: topicName,
           cwd,
