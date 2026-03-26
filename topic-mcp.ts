@@ -20,7 +20,7 @@ import {
 import { connect, type Socket } from 'net'
 import { join, basename } from 'path'
 import { homedir } from 'os'
-import { readFileSync, chmodSync } from 'fs'
+import { readFileSync, chmodSync, readlinkSync } from 'fs'
 import { log, loadExtConfig } from './extensions/index.js'
 
 // ── Config ──────────────────────────────────────────────────────────────────
@@ -40,12 +40,40 @@ try {
 
 loadExtConfig(STATE_DIR)
 
+// Resolve the real project directory — the MCP server runs inside the plugin
+// directory, so process.cwd() is useless. Walk up the process tree to find
+// the Claude Code parent's cwd via /proc.
+function resolveProjectDir(): string | null {
+  try {
+    // Try grandparent first (claude spawns bun which spawns us)
+    for (const pid of [process.ppid, getGrandparentPid()]) {
+      if (!pid) continue
+      try {
+        const cwd = readlinkSync(`/proc/${pid}/cwd`)
+        // Skip if it points to the plugin directory
+        if (!cwd.includes('.claude/plugins')) return cwd
+      } catch {}
+    }
+  } catch {}
+  return process.env.CLAUDE_CWD ?? null
+}
+
+function getGrandparentPid(): number | null {
+  try {
+    const stat = readFileSync(`/proc/${process.ppid}/stat`, 'utf8')
+    const parts = stat.split(' ')
+    return parseInt(parts[3], 10) || null  // field 4 = ppid
+  } catch { return null }
+}
+
+const projectDir = resolveProjectDir()
+
 const topicName =
   process.env.TELEGRAM_TOPIC_NAME ??
-  (process.env.CLAUDE_CWD ? basename(process.env.CLAUDE_CWD) : null) ??
+  (projectDir ? basename(projectDir) : null) ??
   'unnamed-session'
 
-log.info('topic-mcp starting', { topic: topicName })
+log.info('topic-mcp starting', { topic: topicName, projectDir })
 
 // ── Router connection ───────────────────────────────────────────────────────
 
@@ -209,8 +237,8 @@ function connectToRouter(): Promise<void> {
       routerSocket = socket
       log.info('connected to router')
 
-      // Register our topic
-      sendToRouter({ type: 'register', topic_name: topicName })
+      // Register our topic (pass project dir so router can save it for session restore)
+      sendToRouter({ type: 'register', topic_name: topicName, cwd: projectDir ?? process.cwd() })
     })
 
     socket.on('data', data => {

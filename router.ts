@@ -35,6 +35,7 @@ const ENV_FILE = join(STATE_DIR, '.env')
 const SOCKET_PATH = join(STATE_DIR, 'router.sock')
 const TOPICS_FILE = join(STATE_DIR, 'topics.json')
 const PID_FILE = join(STATE_DIR, 'router.pid')
+const SESSIONS_FILE = join(STATE_DIR, 'sessions.json')
 const INBOX_DIR = join(STATE_DIR, 'inbox')
 
 // Load .env (same logic as server.ts)
@@ -94,6 +95,31 @@ function saveTopics(cfg: TopicsConfig): void {
 
 let topicsConfig = loadTopics()
 const forumChatId = process.env.TELEGRAM_FORUM_CHAT_ID ?? topicsConfig.chat_id
+
+// ── Sessions registry (for restore) ────────────────────────────────────────
+
+interface SessionEntry {
+  topic_name: string
+  cwd: string
+  launch_cmd: string
+  last_seen: string
+}
+
+type SessionsRegistry = Record<string, SessionEntry>  // keyed by topic_name
+
+function loadSessions(): SessionsRegistry {
+  try {
+    return JSON.parse(readFileSync(SESSIONS_FILE, 'utf8'))
+  } catch {
+    return {}
+  }
+}
+
+function saveSessions(reg: SessionsRegistry): void {
+  writeFileSync(SESSIONS_FILE, JSON.stringify(reg, null, 2) + '\n')
+}
+
+const sessionsRegistry = loadSessions()
 
 if (!forumChatId) {
   log.info('TELEGRAM_FORUM_CHAT_ID not set — router will detect it from the first forum message')
@@ -219,6 +245,20 @@ async function handleClientMessage(socket: Socket, msg: Record<string, unknown>)
 
       clients.set(topicName, { socket, topicName, threadId, chatId })
       threadToTopic.set(threadId, topicName)
+
+      // Save session for restore
+      const cwd = (msg.cwd as string) || ''
+      if (cwd) {
+        // Build the launch command that can reproduce this session
+        const launchCmd = `TELEGRAM_TOPIC_NAME="${topicName}" claude --channels plugin:telegram@atom-plugins`
+        sessionsRegistry[topicName] = {
+          topic_name: topicName,
+          cwd,
+          launch_cmd: launchCmd,
+          last_seen: new Date().toISOString(),
+        }
+        saveSessions(sessionsRegistry)
+      }
 
       send(socket, {
         type: 'registered',

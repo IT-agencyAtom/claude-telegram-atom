@@ -1,6 +1,6 @@
 {
-  "name": "claude-channel-telegram",
-  "version": "0.0.1",
+  "name": "telegram-atom",
+  "version": "1.0.0",
   "license": "Apache-2.0",
   "type": "module",
   "bin": "./server.ts",

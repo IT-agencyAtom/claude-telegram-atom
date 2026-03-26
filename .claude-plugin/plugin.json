@@ -1,11 +1,14 @@
 {
   "name": "telegram",
-  "description": "Telegram channel for Claude Code \u2014 messaging bridge with built-in access control. Manage pairing, allowlists, and policy via /telegram:access.",
-  "version": "0.0.4",
+  "description": "Enhanced Telegram channel for Claude Code — multi-session forum routing, STT, structured logging, session restore.",
+  "version": "1.0.0",
+  "marketplace": "atom-plugins",
   "keywords": [
     "telegram",
     "messaging",
     "channel",
-    "mcp"
+    "mcp",
+    "forum",
+    "multi-session"
   ]
 }
