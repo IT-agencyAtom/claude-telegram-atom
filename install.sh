@@ -1,5 +1,9 @@
 #!/bin/bash
 # Install telegram@atom-plugins for Claude Code
+#
+# For manual install. If the marketplace is already added, just run:
+#   /plugin install telegram@atom-plugins
+#
 # Usage: bash install.sh
 
 set -e

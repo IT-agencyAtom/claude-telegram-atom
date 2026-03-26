@@ -3,6 +3,11 @@
   "description": "Enhanced Telegram channel for Claude Code — multi-session forum routing, STT, structured logging, session restore.",
   "version": "1.0.0",
   "marketplace": "atom-plugins",
+  "author": {
+    "name": "Aleksei Tomkin",
+    "url": "https://github.com/IT-agencyAtom"
+  },
+  "repository": "https://github.com/IT-agencyAtom/claude-telegram-atom",
   "keywords": [
     "telegram",
     "messaging",
