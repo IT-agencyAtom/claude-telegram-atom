@@ -89,8 +89,7 @@ cmd_restore() {
   pkill -f "bun run --cwd.*telegram-enhanced" 2>/dev/null
   sleep 0.5
 
-  check_file
-  # Extract: topic, cwd, launch_cmd
+  # Extract sessions (empty if file doesn't exist)
   entries=$(python3 -c "
 import json, sys
 with open(sys.argv[1]) as f:
