@@ -84,6 +84,11 @@ print(f'Removed \"{name}\". {len(data)} session(s) remaining.')
 }
 
 cmd_restore() {
+  # Kill leftover bun server.ts processes from previous sessions
+  pkill -f "bun.*server\.ts" 2>/dev/null
+  pkill -f "bun run --cwd.*telegram-enhanced" 2>/dev/null
+  sleep 0.5
+
   check_file
   # Extract: topic, cwd, launch_cmd
   entries=$(python3 -c "
@@ -93,28 +98,37 @@ with open(sys.argv[1]) as f:
 for name, entry in sorted(data.items()):
     topic = entry['topic_name']
     cwd = entry['cwd']
-    cmd = entry.get('launch_cmd', f'TELEGRAM_TOPIC_NAME=\"{topic}\" claude --channels plugin:telegram-enhanced@atom-plugins')
+    cmd = entry.get('launch_cmd', f'TELEGRAM_TOPIC_NAME=\"{topic}\" claude --dangerously-load-development-channels plugin:telegram-enhanced@atom-plugins')
     print(topic + '\t' + cwd + '\t' + cmd)
 " "$SESSIONS_FILE" 2>/dev/null)
 
+  # Start router in the first tab
+  SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+  ROUTER_SCRIPT="$SCRIPT_DIR/router.ts"
+  wt_args=( --title "Router" -- wsl.exe bash -lic "bun $ROUTER_SCRIPT" )
+
   if [[ -z "$entries" ]]; then
-    echo "No sessions found in $SESSIONS_FILE"
+    echo "No sessions found — starting router only."
+    wt.exe new-tab "${wt_args[@]}" &
+    echo "Router started. Connect projects with:"
+    echo "  TELEGRAM_TOPIC_NAME=\"Name\" claude --dangerously-load-development-channels plugin:telegram-enhanced@atom-plugins"
     exit 0
   fi
 
-  # Build a single wt.exe command with all tabs separated by \;
-  wt_args=()
+  # Wait for router to start before launching sessions
+  sleep 1
+
+  # Add session tabs
   count=0
   while IFS=$'\t' read -r topic cwd launch_cmd; do
     [[ -z "$cwd" ]] && continue
 
     win_dir="$(wslpath -w "$cwd" 2>/dev/null || echo "$cwd")"
 
-    if ((count > 0)); then
-      wt_args+=( ";" "new-tab" )
-    fi
-    launcher="$(cd "$(dirname "$0")" && pwd)/launch-session.sh"
-    wt_args+=( --title "$topic" -d "$win_dir" -- wsl.exe bash "$launcher" "$topic" "${launch_cmd}${EXTRA_ARGS}" )
+    wt_args+=( ";" "new-tab" )
+    printf '#!/bin/bash -i\nexport TELEGRAM_TOPIC_NAME="%s"\n(sleep 15 && printf '"'"'\\033]0;%s\\007'"'"') &\nclaude --dangerously-load-development-channels plugin:telegram-enhanced@atom-plugins%s\n' "$topic" "$topic" "$EXTRA_ARGS" > "/tmp/claude-restore-${count}.sh"
+    chmod +x "/tmp/claude-restore-${count}.sh"
+    wt_args+=( --title "$topic" -d "$win_dir" -- wsl.exe bash -li "/tmp/claude-restore-${count}.sh" )
     ((count++))
   done <<< "$entries"
 
